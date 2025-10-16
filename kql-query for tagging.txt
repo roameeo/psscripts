@@ -1,0 +1,29 @@
+Resources
+| where subscriptionId == "55e6995b-7646-44c3-8824-b63576c1b501"
+| where type in~ (
+    "microsoft.compute/virtualmachines",
+    "microsoft.storage/storageaccounts",
+    "microsoft.sql/servers"
+)
+| extend
+    Owner       = tostring(tags['Owner']),
+    CostCenter  = tostring(tags['CostCenter']),
+    Environment = tostring(tags['Environment']),
+    BuildBy     = tostring(tags['BuildBy']),
+    BuildDate   = tostring(tags['BuildDate'])
+| where isempty(Owner) or isempty(CostCenter) or isempty(Environment) or isempty(BuildBy) or isempty(BuildDate)
+| project
+    subscriptionId,
+    name,
+    type,
+    id,
+    MissingTags = trim(", ",
+        strcat(
+            iff(isempty(Owner),       "Owner, ", ""),
+            iff(isempty(CostCenter),  "CostCenter, ", ""),
+            iff(isempty(Environment), "Environment, ", ""),
+            iff(isempty(BuildBy),     "BuildBy, ", ""),
+            iff(isempty(BuildDate),   "BuildDate, ", "")
+        )
+    )
+| order by type asc, name asc
