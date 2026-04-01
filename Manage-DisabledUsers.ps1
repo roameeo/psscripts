@@ -81,7 +81,7 @@ function Remove-UserDirectMemberships {
     [switch]$IncludeCriticalGroups
   )
 
-  $results = New-Object System.Collections.Generic.List[Object]
+  $results = [System.Collections.Generic.List[PSObject]]::new()
 
   if (-not $User.Enabled -and $User.MemberOf) {
     $memberDns = @($User.MemberOf | Select-Object -Unique)
@@ -165,7 +165,7 @@ function Build-DLMembershipIndex {
       $smtp = ($m.PrimarySmtpAddress -as [string])
       if (-not $smtp) { continue }
       $key = $smtp.ToLowerInvariant()
-      if (-not $index.ContainsKey($key)) { $index[$key] = New-Object System.Collections.Generic.List[string] }
+      if (-not $index.ContainsKey($key)) { $index[$key] = [System.Collections.Generic.List[string]]::new() }
       $index[$key].Add($dl.Identity.ToString())
     }
   }
@@ -179,7 +179,7 @@ function Remove-UserFromExchangeDLs {
     $ExoRecipient,                   # result of Get-Recipient
     [hashtable]$DlIndex              # from Build-DLMembershipIndex
   )
-  $results = New-Object System.Collections.Generic.List[Object]
+  $results = [System.Collections.Generic.List[PSObject]]::new()
   if (-not $ExoRecipient) {
     $results.Add([pscustomobject]@{ User=$User.SamAccountName; Step='EXO-Resolve'; Target=''; Outcome='Skip'; Reason='Recipient not found in EXO' })
     return $results
@@ -230,7 +230,7 @@ if ($Action -in @('ExportOnly','Both')) {
   $dir = Split-Path -Path $OutputPath -Parent
   if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
 
-  $export | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+  $export | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding utf8
   Write-Host "Exported $($export.Count) disabled users to $OutputPath"
 }
 
@@ -255,7 +255,7 @@ if ($Action -in @('CleanOnly','Both') -and $SnapshotPath) {
   $snapDir = Split-Path -Path $SnapshotPath -Parent
   if ($snapDir -and -not (Test-Path $snapDir)) { New-Item -ItemType Directory -Path $snapDir | Out-Null }
 
-  $snapshot = New-Object System.Collections.Generic.List[Object]
+  $snapshot = [System.Collections.Generic.List[PSObject]]::new()
   foreach ($u in $cleanList) {
     $memberDns = @($u.MemberOf | Select-Object -Unique)
     if (-not $memberDns) {
@@ -271,13 +271,13 @@ if ($Action -in @('CleanOnly','Both') -and $SnapshotPath) {
       }
     }
   }
-  $snapshot | Export-Csv -Path $SnapshotPath -NoTypeInformation -Encoding UTF8
+  $snapshot | Export-Csv -Path $SnapshotPath -NoTypeInformation -Encoding utf8
   Write-Host "Snapshot written to $SnapshotPath"
 }
 
 # 5) Perform cleanup (AD + optional EXO)
 if ($Action -in @('CleanOnly','Both')) {
-  $log = New-Object System.Collections.Generic.List[Object]
+  $log = [System.Collections.Generic.List[PSObject]]::new()
   $dir = Split-Path -Path $LogPath -Parent
   if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null }
 
@@ -308,6 +308,6 @@ if ($Action -in @('CleanOnly','Both')) {
     }
   }
 
-  $log | Export-Csv -Path $LogPath -NoTypeInformation -Encoding UTF8
+  $log | Export-Csv -Path $LogPath -NoTypeInformation -Encoding utf8
   Write-Host "Cleanup complete. Log written to $LogPath"
 }

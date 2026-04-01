@@ -2,7 +2,6 @@
 # Install-Module Microsoft.Graph -Scope CurrentUser
 
 Connect-MgGraph -Scopes "User.Read.All", "Directory.Read.All", "RoleManagement.Read.Directory"
-# Connect-MgGraph -TenantId "<tenant ID>" -Scopes "User.Read.All", "Directory.Read.All", "RoleManagement.Read.Directory"
 
 # Get all directory roles and their members
 $adminUsers = @{}
@@ -38,5 +37,5 @@ $results = foreach ($userId in $adminUsers.Keys) {
 $results | Sort-Object DisplayName | Format-Table -AutoSize
 
 # Optional: export to CSV
-$results | Sort-Object DisplayName | Export-Csv -Path "C:\Temp\AdminUsers_PasswordReport-NEX.csv" -NoTypeInformation
+$results | Sort-Object DisplayName | Export-Csv -Path "C:\Temp\AdminUsers_PasswordReport-ULT.csv" -NoTypeInformation
 Write-Host "Exported to AdminUsers_PasswordReport.csv" -ForegroundColor Green
