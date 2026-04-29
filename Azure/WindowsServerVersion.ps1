@@ -1,26 +1,27 @@
-Import-Module ActiveDirectory
 Import-Module Az.Compute
 
-# Specify your domain controller and get credentials
-$domainController = "IDC2ADS04.rbi.local"  # Change this to your DC name or IP
-$credential = Get-Credential -Message "Enter domain credentials (DOMAIN\username)"
-
 # Connect to Azure (will prompt for Azure credentials)
-# Write-Host "Connecting to Azure..." -ForegroundColor Cyan
 # Connect-AzAccount
 
-# Get all Azure VM names
-Write-Host "Getting Azure VMs..." -ForegroundColor Cyan
-$azureVMs = Get-AzVM | Select-Object -ExpandProperty Name
+$exportPath = "C:\Temp\WindowsServers.csv"
 
-# Get AD computers and filter to only Azure VMs
-Write-Host "Getting AD computers..." -ForegroundColor Cyan
-$servers = Get-ADComputer -Filter "OperatingSystem -like '*Windows Server*'" -Properties OperatingSystem -Server $domainController -Credential $credential |
-	Where-Object { $azureVMs -contains $_.Name } |
-	Select-Object Name, OperatingSystem |
-	Sort-Object OperatingSystem, Name
+# Get all Azure VMs and their OS info
+Write-Host "Getting Azure VMs..." -ForegroundColor Cyan
+$servers = Get-AzVM | Where-Object { $_.StorageProfile.ImageReference.Sku -like '*2016*' } |
+    Select-Object `
+        @{Name='Name'; Expression={$_.Name}},
+        @{Name='ResourceGroup'; Expression={$_.ResourceGroupName}},
+        @{Name='Location'; Expression={$_.Location}},
+        @{Name='OperatingSystem'; Expression={$_.StorageProfile.ImageReference.Offer}},
+        @{Name='OSVersion'; Expression={$_.StorageProfile.ImageReference.Sku}} |
+    Sort-Object Name
 
 $servers | Format-Table -AutoSize
 
-# Export to CSV:
-$servers | Export-Csv -Path "C:\Temp\WindowsServers.csv" -NoTypeInformation
+# Export to CSV
+if ($servers) {
+    $servers | Export-Csv -Path $exportPath -NoTypeInformation
+    Write-Host "Exported $($servers.Count) VM(s) to $exportPath" -ForegroundColor Green
+} else {
+    Write-Warning "No VMs found."
+}
